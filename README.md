@@ -12,6 +12,7 @@ AIS receiver with DIY antenna and cheap RTL-SDR tuner
 ### Testing (Windows)
 * AISRecWinFull https://sites.google.com/site/feverlaysoft/home
 * OpenCPN
+    * Set the same ip and port in OpenCPN and AISRecWinFull, and start the later
 
 ### Final setup (Raspbian/Raspberry Pi)
-* -
+* TBA
