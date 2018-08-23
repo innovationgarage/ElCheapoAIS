@@ -63,5 +63,13 @@ Compile rtl_ais
 Run rtl_ais
 
       sudo ./rtl_ais -n -h <UDP_SERVER> -P <PORT_SERVER> -p <PPM_ERROR> -g 60 -S 60
-      
+
 Done!
+
+#### Run on boot
+
+      sudo nano /etc/rc.local
+ 
+Add the following lines on top of the last exit line, save and reboot
+
+      cd /home/pi/rtl-ais/ & sudo ./rtl_ais -n -h 144.76.105.244 -P 2982 -p 19.166 -g 60 -S 60  &>> "log/ais.$(date +%Y-%m-%d_%H:%M).log"
