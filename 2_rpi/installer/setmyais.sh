@@ -32,10 +32,9 @@ that uses the rtl2832U chip and a proper antenna.\
 do_system_prepare() {
 
   whiptail --yesno "The script is going to compile and install kalibrate-rtl and rtl-ais\n\nDo you want to continue?" 20 60 2 \
-    --yes-button Cancel --no-button Install
+    --yes-button Install --no-button Cancel
   RET=$?
-  if [ $RET -eq 0 ] 
-  then
+  if [ $RET -eq 0 ]; then
     return 0
   fi
   
@@ -57,7 +56,7 @@ do_system_prepare() {
 # rtl-ais
   echo Downloading rtl-ais
   cd ..
-  git clone https://github.com/dgiardini/rtl-ais 		
+  git clone https://github.com/dgiardini/rtl-ais
   cd rtl-ais
   
   echo Installing...
@@ -88,7 +87,17 @@ fi
 
 
 do_calibrate() {
-  kal -g 42 -e 22 -s 850
+  freq="850"
+  freq=$(whiptail --inputbox "Base frequency for the calibration (850,900,etc) in mhz" 20 60 "$freq" 3>&1 1>&2 2>&3)
+  if [ $? -eq 1 ]; then
+    return 1
+  fi
+  
+  kal -g 42 -e 22 -s $freq 2>&1 | tee stations.txt
+  chan="$(cat stations.txt | sed -n 's/.*chan: \(.*\) (.*power: \(.*\)/\2 \1/p' | sort | tail -n 1 | { read a b ; echo $b ; })"
+  echo "Using channel $chan"
+  kal -e 41 -c $chan -v | tee calibration.txt
+  cat calibration.txt | sed -n "s/average absolute error: \(.*\) ppm/\1/p" > ppm_error.txt
   return 0
 }
 
@@ -109,30 +118,32 @@ do_reset() {
 
 
 do_test_run() {
-  rtl_ais
+  ppm="$([ -r ppm_error.txt ] && cat ppm_error.txt || echo 0)"
+  whiptail --yesno "The program is going to execute rtl_ais now so you can check if you are able to receive NMEA sentences to the console.\n\nThe average absolute error $ppm ppm.\n(If that value is incorrect, cancel and run the calibration again)" 20 60 2 \
+    --yes-button Cancel --no-button Run
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    sudo rtl_ais -n -p $ppm -g 60 -S 60
+  fi
   return 0
 }
 
 do_advanced_menu() {
   FUN=$(whiptail --title "ElCheapoAIS configuration tools" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
       "1 Calibrate" "Find the error ppm" \
-      "2 Test run" "Run rtl_ais (using the error ppm parameter)" \
-      "3 Configure" "Configure rtl_ais to run at system boot" \
-      "4 Remove" "Remove all components" \
-            "5 Reset USB" "Reset the USB devices (in case the rtl-sdr is not responding)" \
-      "6 About ElCheapoAIS" "Information about this tool" \
+      "2 Test run" "Run rtl_ais (using the error ppm parameter from step 1)" \
+      "3 Install" "Configure rtl_ais to run at system boot" \
+      "A About ElCheapoAIS" "Information about this tool" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
-    return 0
+    do_finish
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       1\ *) do_calibrate ;;
       2\ *) do_test_run ;;
-      3\ *) do_memory_split ;;
-      4\ *) do_ssh ;;
-      5\ *) do_reset ;;      
-      6\ *) do_about ;;
+      3\ *) do_install ;;    
+      A\ *) do_about ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -142,25 +153,25 @@ do_advanced_menu() {
 # Interactive use loop
 #
 calc_wt_size
+  while true; do
 if [ -x "$(command -v kal)" ] && [ -x "$(command -v rtl_ais)" ]; then
   do_advanced_menu
 else
-  while true; do
     FUN=$(whiptail --title "ElCheapoAIS configuration tools" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-      "1 Prepare system" "Download, compile and install required components" \
-      "2 About ElCheapoAIS" "Information about this tool" \
+      "0 Prepare system" "Download, compile and install required components" \
+      "A About ElCheapoAIS" "Information about this tool" \
       3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 1 ]; then
       do_finish
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        1\ *) do_system_prepare ;;
-        2\ *) do_about ;;
+        0\ *) do_system_prepare ;;
+        A\ *) do_about ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
       exit 1
     fi
-  done
 fi
+  done
