@@ -1,3 +1,14 @@
+# Quick guide
+1. You need: Raspberry Pi, USB RTL SDR tuner, materials for building the antenna
+2. Craft the antenna (_see instructions below_)
+3. Install newest raspbian light in the RPi
+4. Prepare the destination of the AIS data (_i.e. create AISHub account_)
+5. Execute `wget -q -O - https://git.io/fA6Wx | sudo bash`
+6. Follow the instructions
+7. Profit?
+
+![](2_rpi/installer/screenshoot.png)
+
 # ElCheapoAIS
 AIS receiver with DIY antenna and cheap RTL-SDR tuner 
 
