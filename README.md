@@ -3,8 +3,8 @@
 2. Craft the antenna (_see instructions below_)
 3. Install newest raspbian light in the RPi
 4. Prepare the destination of the AIS data (_i.e. create AISHub account_)
-5. Execute `wget -q -O - https://git.io/fA6Wx | sudo bash`
-6. Follow the instructions
+5. Execute `wget -q -O - https://git.io/fA6Wx | sudo bash` (*Alternatively, you can ignore step 5 and 6 and follow the manual procedure explained at the end of this README*)
+6. Follow the instructions (prepare, calibrate and install)
 7. Profit?
 
 ![](2_rpi/installer/screenshoot.png)
