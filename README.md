@@ -16,11 +16,13 @@ AIS receiver with DIY antenna and cheap RTL-SDR tuner
 
 ## Hardware
 * Tuner https://www.ebay.com/itm/USB2-0-DAB-FM-DVB-T-RTL2832U-R820T2-SDR-RTL-SDR-Dongle-Stick-Digital-TV-Tun-W8M8/283032648261
-* Antenna (162 Mhz)
+* Antenna
 
+### Build the antenna
+The measurements of the antenna are based on https://m0ukd.com/calculators/quarter-wave-ground-plane-antenna-calculator/ for a 162 Mhz antenna. 
 ![](1_antenna/antenna_measurements.PNG)
 
-https://m0ukd.com/calculators/quarter-wave-ground-plane-antenna-calculator/
+Check the upper link for more details on how to build the antenna. The center piece holder can be 3d printed https://www.thingiverse.com/thing:3099905
 
 ## Software
 
