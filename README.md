@@ -19,11 +19,11 @@ AIS receiver with DIY antenna and cheap RTL-SDR tuner
 * Antenna
 
 ### Build the antenna
-The measurements of the antenna are based on https://m0ukd.com/calculators/quarter-wave-ground-plane-antenna-calculator/ for a 162 Mhz antenna. 
+Measurements, examples and building instructions are available here: https://m0ukd.com/calculators/quarter-wave-ground-plane-antenna-calculator/. The following measurements are for a 162 Mhz antenna (for best results build one around that frequency):
 
 ![](1_antenna/antenna_measurements.PNG)
 
-Check the upper link for more details on how to build the antenna. The center piece holder can be 3d printed https://www.thingiverse.com/thing:3099905
+The center holder shown in the image is available here: https://www.thingiverse.com/thing:3099905
 
 ## Software
 
