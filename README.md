@@ -23,7 +23,7 @@ Measurements, examples and building instructions are available here: https://m0u
 
 ![](1_antenna/antenna_measurements.PNG)
 
-The center holder shown in the image is available here: https://www.thingiverse.com/thing:3099905
+You can 3d print the center holder: https://www.thingiverse.com/thing:3099905
 
 ## Software
 
