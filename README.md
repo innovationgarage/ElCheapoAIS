@@ -3,6 +3,7 @@ AIS receiver with DIY antenna and cheap RTL-SDR tuner
 
 ![](elcheapo.png)
 
+
 ## Quick guide
 1. You need: Raspberry Pi, USB RTL SDR tuner, materials for building the antenna
 2. Craft the antenna (_see instructions below_)
@@ -14,9 +15,11 @@ AIS receiver with DIY antenna and cheap RTL-SDR tuner
 
 ![](2_rpi/installer/screenshoot.png)
 
+
 ## Hardware
 * Tuner https://www.ebay.com/itm/USB2-0-DAB-FM-DVB-T-RTL2832U-R820T2-SDR-RTL-SDR-Dongle-Stick-Digital-TV-Tun-W8M8/283032648261
 * Antenna
+
 
 ### Build the antenna
 Measurements, examples and building instructions are available here: https://m0ukd.com/calculators/quarter-wave-ground-plane-antenna-calculator/. The following measurements are for a 162 Mhz antenna (for best results build one around that frequency):
@@ -24,6 +27,7 @@ Measurements, examples and building instructions are available here: https://m0u
 ![](1_antenna/antenna_measurements.PNG)
 
 You can 3d print the center holder: https://www.thingiverse.com/thing:3099905
+
 
 ## Software
 
@@ -34,6 +38,7 @@ You can 3d print the center holder: https://www.thingiverse.com/thing:3099905
 
 ### Raspbian/Raspberry Pi
 Using kalibrate-rtl and rtl-ais.
+
 
 #### Setup
 
