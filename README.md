@@ -1,4 +1,9 @@
-# Quick guide
+# ElCheapoAIS
+AIS receiver with DIY antenna and cheap RTL-SDR tuner 
+
+![](elcheapo.png)
+
+## Quick guide
 1. You need: Raspberry Pi, USB RTL SDR tuner, materials for building the antenna
 2. Craft the antenna (_see instructions below_)
 3. Install Raspbian on the RPi (tested with Stretch 4.14 Lite)
@@ -8,11 +13,6 @@
 7. Profit?
 
 ![](2_rpi/installer/screenshoot.png)
-
-# ElCheapoAIS
-AIS receiver with DIY antenna and cheap RTL-SDR tuner 
-
-![](antenna.jpg)
 
 ## Hardware
 * Tuner https://www.ebay.com/itm/USB2-0-DAB-FM-DVB-T-RTL2832U-R820T2-SDR-RTL-SDR-Dongle-Stick-Digital-TV-Tun-W8M8/283032648261
