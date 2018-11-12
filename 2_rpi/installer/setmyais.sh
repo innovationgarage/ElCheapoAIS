@@ -34,7 +34,7 @@ do_system_prepare() {
 	whiptail --yesno "The script is going to compile and install kalibrate-rtl and rtl-ais\n\nDo you want to continue?" 20 60 2 \
 		--yes-button Install --no-button Cancel
 	RET=$?
-	if [ $RET -eq 0 ]; then
+	if [ $RET != 0 ]; then
 		return 0
 	fi
 
