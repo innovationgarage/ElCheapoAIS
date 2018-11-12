@@ -44,25 +44,30 @@ do_system_prepare() {
 
 	# kalibrate-rtl
 	echo Downloading kalibrate-rtl
-	git clone https://github.com/steve-m/kalibrate-rtl
-	cd kalibrate-rtl
+	(
+	        cd /tmp
+                git clone https://github.com/steve-m/kalibrate-rtl
+                cd kalibrate-rtl
 
-	echo Installing...
-	sudo ./bootstrap && CXXFLAGS='-W -Wall -O3'
-	sudo ./configure
-	make
-	sudo make install
-
+	        echo Installing...
+	        sudo ./bootstrap && CXXFLAGS='-W -Wall -O3'
+	        sudo ./configure
+	        make
+	        sudo make install
+        )
+		
 	# rtl-ais
 	echo Downloading rtl-ais
-	cd ..
-	git clone https://github.com/dgiardini/rtl-ais
-	cd rtl-ais
+	(
+	        cd  /tmp
+	        git clone https://github.com/dgiardini/rtl-ais
+	        cd rtl-ais
 
-	echo Installing...
-	make
-	cp rtl_ais /usr/bin
-
+	        echo Installing...
+	        make
+	        cp rtl_ais /usr/bin
+        )
+		
 	if [ "$INTERACTIVE" = True ]; then
 		whiptail --msgbox "Your system is ready.\nConfigure your station from the main menu" 20 60 2
 	fi
@@ -104,18 +109,21 @@ do_calibrate() {
 }
 
 do_reset() {
-	git clone https://github.com/codazoda/hub-ctrl.c
-	cd hub-ctrl.c
-	gcc -o hub-ctrl hub-ctrl.c -lusb
-	cp hub-ctrl ..
-	cd ..
-	echo "Disconnecting devices (you might lose connection for few seconds if this is remote)"
-	sudo ./hub-ctrl -h 0 -P 2 -p 0
-	sleep 5
-	sudo ./hub-ctrl -h 0 -P 2 -p 1
-	echo done
-	sleep 1
-	return 0
+        (
+	        cd /tmp
+    	        git clone https://github.com/codazoda/hub-ctrl.c
+	        cd hub-ctrl.c
+	        gcc -o hub-ctrl hub-ctrl.c -lusb
+	        cp hub-ctrl /usr/bin/hub-ctrl
+
+      	        echo "Disconnecting devices (you might lose connection for few seconds if this is remote)"
+	        sudo hub-ctrl -h 0 -P 2 -p 0
+	        sleep 5
+	        sudo hub-ctrl -h 0 -P 2 -p 1
+	        echo done
+	        sleep 1
+	        return 0
+	)
 }
 
 do_install() {
