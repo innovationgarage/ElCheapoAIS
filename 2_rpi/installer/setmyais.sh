@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/bash
 # Based on raspi-config https://github.com/asb/raspi-config
 # See LICENSE file for copyright and license details
 
@@ -40,7 +40,7 @@ do_system_prepare() {
 
 	# General dependencies
 	echo Installing dependencies
-	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git librtlsdr-dev libusb-dev libpthread-workqueue-dev -y
+	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git librtlsdr-dev libusb-dev libpthread-workqueue-dev rtl-sdr -y
 
 	# kalibrate-rtl
 	echo Downloading kalibrate-rtl
@@ -90,24 +90,6 @@ if [ $(id -u) -ne 0 ]; then
 	exit 1
 fi
 
-do_calibrate() {
-	freq="850"
-	freq=$(whiptail --inputbox "Input the base frequency for the calibration routine (850, 900, etc) in MHz" 20 60 "$freq" 3>&1 1>&2 2>&3)
-	if [ $? -eq 1 ]; then
-		return 1
-	fi
-
-	kal -g 42 -e 22 -s $freq 2>&1 | tee stations.txt
-	chan="$(cat stations.txt | sed -n 's/.*chan: \(.*\) (.*power: \(.*\)/\2 \1/p' | sort | tail -n 1 | {
-		read a b
-		echo $b
-	})"
-	echo "Using channel $chan"
-	kal -e 41 -c $chan -v | tee calibration.txt
-	cat calibration.txt | sed -n "s/average absolute error: \(.*\) ppm/\1/p" >ppm_error.txt
-	return 0
-}
-
 do_reset() {
         (
 	        cd /tmp
@@ -140,72 +122,42 @@ do_install() {
 		return 1
 	fi
 
-	ppm="$([ -r ppm_error.txt ] && cat ppm_error.txt || echo 0)"
-
 	# TODO: Validate IP and port
-	cat <<EOF >/tmp/cheapoais
-while :
-do
-sudo rtl_ais -n -h $server -P $port -p $ppm -g 60 -S 60  &> "/var/log/cheapoais/ais.\$(date +%Y-%m-%d_%H-%M).log"
-sleep 1
-done
+
+	cat > /tmp/elcheapoais-config <<EOF
+server=$server
+port=$port
 EOF
+	
+        sudo mkdir -p /etc/elcheapoais
+	sudo mkdir -p /var/log/elcheapoais
 
-	sudo mkdir -p /var/log/cheapoais
-	sudo mv /tmp/cheapoais /usr/local/bin/
-	chmod a+x /usr/local/bin/cheapoais
+	sudo mv /tmp/elcheapoais-config /etc/elcheapoais/config
+	sudo cp elcheapoais.sh /usr/local/bin/elcheapoais.sh
+	chmod a+x /usr/local/bin/elcheapoais.sh
 
-	# Configure systemd
-
-	cat <<EOF >/tmp/cheapoais.service
-[Unit]
-Description=CheapoAIS Service
-After=multi-user.target
-
-[Service]
-Type=idle
-ExecStart=/bin/bash /usr/local/bin/cheapoais
-KillMode=process
-Type=forking
-
-[Install]
-WantedBy=multi-user.target
-EOF
-	sudo mv /tmp/cheapoais.service /lib/systemd/system/
-	sudo chmod 644 /lib/systemd/system/cheapoais.service
+	sudo cp elcheapoais.service /lib/systemd/system/elcheapoais.service
+	sudo chmod 644 /lib/systemd/system/elcheapoais.service
 
 	sudo systemctl daemon-reload
-	sudo systemctl enable cheapoais.service
+	sudo systemctl enable elcheapoais.service
 
 	ASK_TO_REBOOT=1
 	whiptail --msgbox "\
 Setup done. To start service reboot or execute:
-sudo systemctl start cheapoais.service
+sudo systemctl start elcheapoais.service
 
 Check logs here:
-/var/log/cheapoais/
+/var/log/elcheapoais/
 " 20 70 1
 
 	return 0
 }
 
-do_test_run() {
-	ppm="$([ -r ppm_error.txt ] && cat ppm_error.txt || echo 0)"
-	whiptail --yesno "The program is going to execute rtl_ais now so you can check if you are able to receive NMEA sentences to the console.\n\nThe average absolute error $ppm ppm.\n(If that value is incorrect, cancel and run the calibration again)" 20 60 2 \
-		--yes-button Cancel --no-button Run
-	RET=$?
-	if [ $RET -eq 1 ]; then
-		sudo rtl_ais -n -p $ppm -g 60 -S 60
-	fi
-	return 0
-}
-
 do_advanced_menu2() {
 	FUN=$(whiptail --title "ElCheapoAIS configuration tools" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-		"1 Calibrate" "Find the error ppm" \
-		"2 Test run" "Run rtl_ais (using the error ppm parameter from step 1)" \
-		"3 Re-install" "Configure rtl_ais to run at system boot" \
-		"4 Remove" "Remove rtl_ais from system boot" \
+		"1 Re-install" "Configure rtl_ais to run at system boot" \
+		"2 Remove" "Remove rtl_ais from system boot" \
 		"A About ElCheapoAIS" "Information about this tool" \
 		3>&1 1>&2 2>&3)
 	RET=$?
@@ -213,10 +165,8 @@ do_advanced_menu2() {
 		do_finish
 	elif [ $RET -eq 0 ]; then
 		case "$FUN" in
-		1\ *) do_calibrate ;;
-		2\ *) do_test_run ;;
-		3\ *) do_install ;;
-		4\ *) do_remove ;;
+		1\ *) do_install ;;
+		2\ *) do_remove ;;
 		A\ *) do_about ;;
 		*) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
 		esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
@@ -225,9 +175,7 @@ do_advanced_menu2() {
 
 do_advanced_menu() {
 	FUN=$(whiptail --title "ElCheapoAIS configuration tools" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-		"1 Calibrate" "Find the error ppm" \
-		"2 Test run" "Run rtl_ais (using the error ppm parameter from step 1)" \
-		"3 Install" "Configure rtl_ais to run at system boot" \
+		"1 Install" "Configure rtl_ais to run at system boot" \
 		"A About ElCheapoAIS" "Information about this tool" \
 		3>&1 1>&2 2>&3)
 	RET=$?
@@ -235,9 +183,7 @@ do_advanced_menu() {
 		do_finish
 	elif [ $RET -eq 0 ]; then
 		case "$FUN" in
-		1\ *) do_calibrate ;;
-		2\ *) do_test_run ;;
-		3\ *) do_install ;;
+		1\ *) do_install ;;
 		A\ *) do_about ;;
 		*) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
 		esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
