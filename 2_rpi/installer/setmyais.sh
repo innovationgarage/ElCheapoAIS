@@ -90,6 +90,16 @@ if [ $(id -u) -ne 0 ]; then
 	exit 1
 fi
 
+do_calibrate() {
+	freq="850"
+	freq=$(whiptail --inputbox "Input the base frequency for the calibration routine (850, 900, etc) in MHz" 20 60 "$freq" 3>&1 1>&2 2>&3)
+	if [ $? -eq 1 ]; then
+		return 1
+	fi
+
+        ./elcheapo-calibrate.sh
+}
+
 do_reset() {
         (
 	        cd /tmp
@@ -155,10 +165,24 @@ Check logs here:
 	return 0
 }
 
+do_test_run() {
+        source <(./elcheapo-calibrate.sh)
+    
+	whiptail --yesno "The program is going to execute rtl_ais now so you can check if you are able to receive NMEA sentences to the console.\n\nThe average absolute error $PPM ppm.\n(If that value is incorrect, cancel and run the calibration again)" 20 60 2 \
+		--yes-button Cancel --no-button Run
+	RET=$?
+	if [ $RET -eq 1 ]; then
+		sudo rtl_ais -n -p $PPM -g 60 -S 60
+	fi
+	return 0
+}
+
 do_advanced_menu2() {
 	FUN=$(whiptail --title "ElCheapoAIS configuration tools" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-		"1 Re-install" "Configure rtl_ais to run at system boot" \
-		"2 Remove" "Remove rtl_ais from system boot" \
+		"1 Calibrate" "Find the error ppm" \
+		"2 Test run" "Run rtl_ais (using the error ppm parameter from step 1)" \
+		"3 Re-install" "Configure rtl_ais to run at system boot" \
+		"4 Remove" "Remove rtl_ais from system boot" \
 		"A About ElCheapoAIS" "Information about this tool" \
 		3>&1 1>&2 2>&3)
 	RET=$?
@@ -166,8 +190,10 @@ do_advanced_menu2() {
 		do_finish
 	elif [ $RET -eq 0 ]; then
 		case "$FUN" in
-		1\ *) do_install ;;
-		2\ *) do_remove ;;
+		1\ *) do_calibrate ;;
+		2\ *) do_test_run ;;
+		3\ *) do_install ;;
+		4\ *) do_remove ;;
 		A\ *) do_about ;;
 		*) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
 		esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
@@ -176,7 +202,9 @@ do_advanced_menu2() {
 
 do_advanced_menu() {
 	FUN=$(whiptail --title "ElCheapoAIS configuration tools" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-		"1 Install" "Configure rtl_ais to run at system boot" \
+		"1 Calibrate" "Find the error ppm" \
+		"2 Test run" "Run rtl_ais (using the error ppm parameter from step 1)" \
+		"3 Install" "Configure rtl_ais to run at system boot" \
 		"A About ElCheapoAIS" "Information about this tool" \
 		3>&1 1>&2 2>&3)
 	RET=$?
@@ -184,7 +212,9 @@ do_advanced_menu() {
 		do_finish
 	elif [ $RET -eq 0 ]; then
 		case "$FUN" in
-		1\ *) do_install ;;
+		1\ *) do_calibrate ;;
+		2\ *) do_test_run ;;
+		3\ *) do_install ;;
 		A\ *) do_about ;;
 		*) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
 		esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
