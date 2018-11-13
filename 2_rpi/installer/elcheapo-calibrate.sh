@@ -3,7 +3,7 @@
 PROD="$(rtl_eeprom 2>&1 | grep "Product:" | sed -e "s+.*:[ \t]*++g")"
 SERIAL="$(rtl_eeprom 2>&1 | grep "Serial number:" | sed -e "s+.*:[ \t]*++g")"
 
-if [ ${PROD::1} != "K" ]; then
+if [ "${PROD::1}" != "K" ]; then
     {
 	echo "Uncalibrated device found. Calibrating (this will take half an hour or so)... "
 
