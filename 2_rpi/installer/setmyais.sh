@@ -133,8 +133,9 @@ EOF
 	sudo mkdir -p /var/log/elcheapoais
 
 	sudo mv /tmp/elcheapoais-config /etc/elcheapoais/config
+	sudo cp elcheapo-calibrate.sh /usr/local/bin/elcheapo-calibrate.sh
 	sudo cp elcheapoais.sh /usr/local/bin/elcheapoais.sh
-	chmod a+x /usr/local/bin/elcheapoais.sh
+	chmod a+x /usr/local/bin/elcheapo-calibrate.sh /usr/local/bin/elcheapoais.sh
 
 	sudo cp elcheapoais.service /lib/systemd/system/elcheapoais.service
 	sudo chmod 644 /lib/systemd/system/elcheapoais.service
