@@ -36,6 +36,14 @@ You can 3d print the center holder: https://www.thingiverse.com/thing:3099905
 * OpenCPN
     * Set the same ip and port in OpenCPN and AISRecWinFull, and start the later
 
+### Ubuntu
+
+If your device is constantly in use even though you're not using it,
+it's probably used by the DVB kernel driver. To use it as an SDR
+receiver run the following as root before pluggin in your device:
+
+    echo "blacklist dvb_usb_rtl28xxu" >> /etc/modprobe.d/blacklist.conf
+
 ### Raspbian/Raspberry Pi
 Using kalibrate-rtl and rtl-ais.
 
