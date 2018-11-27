@@ -1,0 +1,13 @@
+Package: elcheapoais-dbgsym
+Package-Type: ddeb
+Source: elcheapoais
+Version: 0.0.1
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Egil <egil@innovationgarage.no>
+Installed-Size: 148
+Depends: elcheapoais (= 0.0.1)
+Section: debug
+Priority: optional
+Description: debug symbols for elcheapoais
+Build-Ids: c158324ddffb0dc07a4525321a7ea2a08d34347f ca3ad3ecbe7cdc95a49ed9c2bb2dd3d0c17986b8

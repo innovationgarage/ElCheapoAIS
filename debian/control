@@ -1,0 +1,16 @@
+Source: elcheapoais
+Section: unknown
+Priority: optional
+Maintainer: Egil <egil@innovationgarage.no>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.1.2
+Homepage: https://github.com/innovationgarage/ElCheapoAIS
+Vcs-Git: https://github.com/innovationgarage/ElCheapoAIS.git
+Vcs-Browser: https://github.com/innovationgarage/ElCheapoAIS
+
+Package: elcheapoais
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, build-essential, libtool, m4, automake, libfftw3-dev, automake, autoconf, git, librtlsdr-dev, libusb-dev, libpthread-workqueue-dev, rtl-sdr
+Description: AIS receiver with DIY antenna and cheap RTL-SDR tuner
+ AIS receiver with DIY antenna and cheap RTL-SDR tuner
+ 

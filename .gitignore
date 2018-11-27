@@ -1,3 +1,7 @@
 0_software/AISRecWinFull_Lite2.003/
 0_software/opencpn_4.8.6_setup.rar
 *.lck
+debian/debhelper-build-stamp
+debian/elcheapoais/
+kalibrate-rtl/
+rtl-ais/
