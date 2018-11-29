@@ -9,7 +9,7 @@ AIS receiver with DIY antenna and cheap RTL-SDR tuner
 2. Craft the antenna (_see instructions below_)
 3. Install Raspbian on the RPi (tested with Stretch 4.14 Lite)
 4. Prepare the destination of the AIS data (i.e. create AISHub account: http://www.aishub.net/join-us)
-5. Execute `wget -q -O - https://git.io/fA6Wx | sudo bash` (Alternatively, you can ignore step 5 and 6 and follow the procedure at the end of this README)
+5. Execute `wget -q -O - https://git.io/fpVRc | sudo bash` (Alternatively, you can ignore step 5 and 6 and follow the procedure at the end of this README)
 6. Follow the instructions (prepare, calibrate and install using the account details received in step 4)
 7. Profit?
 
