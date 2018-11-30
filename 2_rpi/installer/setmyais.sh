@@ -40,7 +40,7 @@ do_system_prepare() {
 
 	# General dependencies
 	echo Installing dependencies
-	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git librtlsdr-dev libusb-dev libpthread-workqueue-dev rtl-sdr -y
+	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git librtlsdr-dev libusb-dev libpthread-workqueue-dev rtl-sdr pkg-config python -y
 
 	# kalibrate-rtl
 	echo Downloading kalibrate-rtl
