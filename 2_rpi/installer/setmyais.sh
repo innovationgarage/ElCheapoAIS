@@ -40,7 +40,7 @@ do_system_prepare() {
 
 	# General dependencies
 	echo Installing dependencies
-	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git librtlsdr-dev libusb-dev libpthread-workqueue-dev rtl-sdr pkg-config python -y
+	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git librtlsdr-dev libusb-dev libpthread-workqueue-dev rtl-sdr pkg-config python python-pip python-dev -y
 
 	# kalibrate-rtl
 	echo Downloading kalibrate-rtl
@@ -67,7 +67,17 @@ do_system_prepare() {
 	        make
 	        cp rtl_ais /usr/bin
         )
-		
+	
+        # downsampler
+        (
+                cd /tmp
+                git clone https://github.com/innovationgarage/ElCheapoAIS-downsampler.git
+                cd ElCheapoAIS-downsampler
+
+                echo Installing...
+                python setup.py install
+        )
+	
 	if [ "$INTERACTIVE" = True ]; then
 		whiptail --msgbox "Your system is ready.\nConfigure your station from the main menu" 20 60 2
 	fi
@@ -120,14 +130,33 @@ do_reset() {
 
 do_install() {
 	# TODO: Clean variables
-	server="127.0.0.1"
-	server=$(whiptail --inputbox "UDP server address" 20 60 "$server" 3>&1 1>&2 2>&3)
+	server="elcheapoais.innovationgarage.tech"
+	port="1024"
+	stationid="unknown"
+        msgspersec="100"
+        msgspersecpermmsi="10"
+
+	server=$(whiptail --inputbox "TCP server address to send messages to" 20 60 "$server" 3>&1 1>&2 2>&3)
 	if [ $? -eq 1 ]; then
 		return 1
 	fi
 
-	port="2222"
-	port=$(whiptail --inputbox "UDP server port" 20 60 "$port" 3>&1 1>&2 2>&3)
+	port=$(whiptail --inputbox "TCP server port" 20 60 "$port" 3>&1 1>&2 2>&3)
+	if [ $? -eq 1 ]; then
+		return 1
+	fi
+
+	stationid=$(whiptail --inputbox "StationID to set in AIS messages" 20 60 "$stationid" 3>&1 1>&2 2>&3)
+	if [ $? -eq 1 ]; then
+		return 1
+	fi
+
+	msgspersec=$(whiptail --inputbox "AIS messages / second upper limit" 20 60 "$msgspersec" 3>&1 1>&2 2>&3)
+	if [ $? -eq 1 ]; then
+		return 1
+	fi
+
+	msgspersecpermmsi=$(whiptail --inputbox "AIS messages / second / mmsi upper limit" 20 60 "$msgspersecpermmsi" 3>&1 1>&2 2>&3)
 	if [ $? -eq 1 ]; then
 		return 1
 	fi
@@ -135,8 +164,11 @@ do_install() {
 	# TODO: Validate IP and port
 
 	cat > /tmp/elcheapoais-config <<EOF
-server=$server
-port=$port
+server="$server"
+port="$port"
+stationid="$stationid"
+msgspersec="$msgspersec"
+msgspersecpermmsi="$msgspersecpermmsi"
 EOF
 	
         sudo mkdir -p /etc/elcheapoais
@@ -144,19 +176,23 @@ EOF
 
 	sudo mv /tmp/elcheapoais-config /etc/elcheapoais/config
 	sudo cp elcheapo-calibrate.sh /usr/local/bin/elcheapo-calibrate.sh
-	sudo cp elcheapoais.sh /usr/local/bin/elcheapoais.sh
-	chmod a+x /usr/local/bin/elcheapo-calibrate.sh /usr/local/bin/elcheapoais.sh
+	sudo cp elcheapoais-receiver.sh /usr/local/bin/elcheapoais-receiver.sh
+	sudo cp elcheapoais-downsampler.sh /usr/local/bin/elcheapoais-downsampler.sh
+	chmod a+x /usr/local/bin/elcheapo-calibrate.sh /usr/local/bin/elcheapoais-receiver.sh /usr/local/bin/elcheapoais-downsampler.sh
 
-	sudo cp elcheapoais.service /lib/systemd/system/elcheapoais.service
-	sudo chmod 644 /lib/systemd/system/elcheapoais.service
+	sudo cp elcheapoais-receiver.service /lib/systemd/system/elcheapoais-receiver.service
+	sudo cp elcheapoais-downsampler.service /lib/systemd/system/elcheapoais-downsampler.service
+	sudo chmod 644 /lib/systemd/system/elcheapoais-receiver.service /lib/systemd/system/elcheapoais-downsampler.service
 
 	sudo systemctl daemon-reload
-	sudo systemctl enable elcheapoais.service
+	sudo systemctl enable elcheapoais-receiver.service
+	sudo systemctl enable elcheapoais-downsampler.service
 
 	ASK_TO_REBOOT=1
 	whiptail --msgbox "\
 Setup done. To start service reboot or execute:
-sudo systemctl start elcheapoais.service
+sudo systemctl start elcheapoais-receiver.service
+sudo systemctl start elcheapoais-downsampler.service
 
 Check logs here:
 /var/log/elcheapoais/

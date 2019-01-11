@@ -1,10 +1,10 @@
 [Unit]
-Description=ElCheapoAIS Service
+Description=ElCheapoAIS receiver service
 After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/bin/bash /usr/local/bin/elcheapoais.sh
+ExecStart=/bin/bash /usr/local/bin/elcheapoais-receiver.sh
 KillMode=process
 Type=forking
 
