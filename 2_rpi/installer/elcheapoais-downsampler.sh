@@ -11,5 +11,4 @@ while : ; do
       --max-message-per-mmsi-per-sec $msgspersecpermmsi \
       '{"type": "connect", "connect":"tcp:localhost:1221"}' \
       '{"type": "connect", "connect":"'"tcp:$server:$port"'"}' > "$LOG" 2>&1
-    sleep 1
 done
