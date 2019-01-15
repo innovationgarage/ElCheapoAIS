@@ -40,7 +40,22 @@ do_system_prepare() {
 
 	# General dependencies
 	echo Installing dependencies
-	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git librtlsdr-dev libusb-dev libpthread-workqueue-dev rtl-sdr pkg-config python python-pip python-dev -y
+	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git  libusb-dev libpthread-workqueue-dev pkg-config python python-pip python-dev -y
+        # librtlsdr-dev rtl-sdr
+
+        echo Downloading librtlsdr
+        (
+                # Installing from source and pinning version to get around bug where tuner was not found
+                cd /tmp
+                git clone git@github.com:librtlsdr/librtlsdr.git
+                cd librtlsdr
+                git checkout v0.5.3
+                mkdir build
+                cd build
+                cmake .. -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_INSTALL_PREFIX=/usr
+                make
+                make install
+        )
 
 	# kalibrate-rtl
 	echo Downloading kalibrate-rtl
