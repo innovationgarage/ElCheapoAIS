@@ -1,7 +1,6 @@
 #! /bin/bash
 
 source /etc/elcheapoais/config
-source <(/usr/local/bin/elcheapo-calibrate.sh)
 
 while : ; do
     LOG="/var/log/elcheapoais/downsampler.$(date +%Y-%m-%dT%H:%M).log"
