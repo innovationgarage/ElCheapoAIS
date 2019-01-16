@@ -195,21 +195,25 @@ EOF
 	sudo mv /tmp/elcheapoais-config /etc/elcheapoais/config
 	sudo cp elcheapo-calibrate.sh /usr/local/bin/elcheapo-calibrate.sh
 	sudo cp elcheapoais-receiver.sh /usr/local/bin/elcheapoais-receiver.sh
+	sudo cp elcheapoais-udptotcp.sh /usr/local/bin/elcheapoais-udptotcp.sh
 	sudo cp elcheapoais-downsampler.sh /usr/local/bin/elcheapoais-downsampler.sh
-	chmod a+x /usr/local/bin/elcheapo-calibrate.sh /usr/local/bin/elcheapoais-receiver.sh /usr/local/bin/elcheapoais-downsampler.sh
+	chmod a+x /usr/local/bin/elcheapo-calibrate.sh /usr/local/bin/elcheapoais-receiver.sh /usr/local/bin/elcheapoais-udptotcp.sh /usr/local/bin/elcheapoais-downsampler.sh
 
 	sudo cp elcheapoais-receiver.service /lib/systemd/system/elcheapoais-receiver.service
+	sudo cp elcheapoais-udptotcp.service /lib/systemd/system/elcheapoais-udptotcp.service
 	sudo cp elcheapoais-downsampler.service /lib/systemd/system/elcheapoais-downsampler.service
-	sudo chmod 644 /lib/systemd/system/elcheapoais-receiver.service /lib/systemd/system/elcheapoais-downsampler.service
+	sudo chmod 644 /lib/systemd/system/elcheapoais-receiver.service /lib/systemd/system/elcheapoais-udptotcp.service /lib/systemd/system/elcheapoais-downsampler.service
 
 	sudo systemctl daemon-reload
 	sudo systemctl enable elcheapoais-receiver.service
+	sudo systemctl enable elcheapoais-udptotcp.service
 	sudo systemctl enable elcheapoais-downsampler.service
 
 	ASK_TO_REBOOT=1
 	whiptail --msgbox "\
 Setup done. To start service reboot or execute:
 sudo systemctl start elcheapoais-receiver.service
+sudo systemctl start elcheapoais-udptotcp.service
 sudo systemctl start elcheapoais-downsampler.service
 
 Check logs here:
