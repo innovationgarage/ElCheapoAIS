@@ -3,10 +3,9 @@ Description=ElCheapoAIS downsampler service
 After=multi-user.target
 
 [Service]
-Type=idle
+Type=simple
 ExecStart=/bin/bash /usr/local/bin/elcheapoais-downsampler.sh
 KillMode=process
-Type=forking
 
 [Install]
 WantedBy=multi-user.target

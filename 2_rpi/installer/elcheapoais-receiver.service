@@ -3,10 +3,9 @@ Description=ElCheapoAIS receiver service
 After=multi-user.target
 
 [Service]
-Type=idle
+Type=simple
 ExecStart=/bin/bash /usr/local/bin/elcheapoais-receiver.sh
 KillMode=process
-Type=forking
 
 [Install]
 WantedBy=multi-user.target

@@ -3,10 +3,9 @@ Description=ElCheapoAIS udp to tcp service
 After=multi-user.target
 
 [Service]
-Type=idle
+Type=simple
 ExecStart=/bin/bash /usr/local/bin/elcheapoais-udptotcp.sh
 KillMode=process
-Type=forking
 
 [Install]
 WantedBy=multi-user.target
