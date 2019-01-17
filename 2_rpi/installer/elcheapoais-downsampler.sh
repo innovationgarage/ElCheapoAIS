@@ -2,6 +2,9 @@
 
 source /etc/elcheapoais/config
 
+export PYTHONUNBUFFERED=1
+export PYTHONVERBOSE=1
+
 while : ; do
     LOG="/var/log/elcheapoais/downsampler.$(date +%Y-%m-%dT%H:%M).log"
     aisdownsampler server \
