@@ -40,7 +40,7 @@ do_system_prepare() {
 
 	# General dependencies
 	echo Installing dependencies
-	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git  libusb-dev libpthread-workqueue-dev pkg-config python python-pip python-dev python-setuptools -y
+	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git  libusb-dev libpthread-workqueue-dev pkg-config python python-pip python-dev python-setuptools nmap -y
         # librtlsdr-dev rtl-sdr
 
         # Somehow, setuptools fails to install this dependency of the downsampler
