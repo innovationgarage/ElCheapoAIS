@@ -31,6 +31,7 @@ that uses the rtl2832U chip and a proper antenna.\
 
 do_system_prepare() {
 
+
 	whiptail --yesno "The script is going to compile and install kalibrate-rtl and rtl-ais\n\nDo you want to continue?" 20 60 2 \
 		--yes-button Install --no-button Cancel
 	RET=$?
@@ -40,7 +41,8 @@ do_system_prepare() {
 
 	# General dependencies
 	echo Installing dependencies
-	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git  libusb-dev libpthread-workqueue-dev pkg-config python python-pip python-dev python-setuptools nmap -y
+        apt update
+	apt install cmake build-essential libtool m4 automake libfftw3-dev automake autoconf git  libusb-dev libusb-1.0-0-dev libpthread-workqueue-dev pkg-config python python-pip python-dev python-setuptools nmap -y
         # librtlsdr-dev rtl-sdr
 
         # Somehow, setuptools fails to install this dependency of the downsampler
@@ -296,7 +298,9 @@ while true; do
 			do_finish
 		elif [ $RET -eq 0 ]; then
 			case "$FUN" in
-			0\ *) do_system_prepare ;;
+			0\ *)
+                          do_system_prepare 2>&1 | tee installlog
+                          ;;
 			A\ *) do_about ;;
 			*) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
 			esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
