@@ -1,0 +1,11 @@
+[Unit]
+Description=ElCheapoAIS udp to tcp service
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/bin/elcheapoais-udptotcp.sh
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

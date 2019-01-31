@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/bash
 # Based on raspi-config https://github.com/asb/raspi-config
 # See LICENSE file for copyright and license details
 
@@ -31,38 +31,73 @@ that uses the rtl2832U chip and a proper antenna.\
 
 do_system_prepare() {
 
+
 	whiptail --yesno "The script is going to compile and install kalibrate-rtl and rtl-ais\n\nDo you want to continue?" 20 60 2 \
 		--yes-button Install --no-button Cancel
 	RET=$?
-	if [ $RET -eq 0 ]; then
+	if [ $RET != 0 ]; then
 		return 0
 	fi
 
 	# General dependencies
 	echo Installing dependencies
-	apt install build-essential libtool m4 automake libfftw3-dev automake autoconf git librtlsdr-dev libusb-dev libpthread-workqueue-dev -y
+        apt update
+	apt install cmake build-essential libtool m4 automake libfftw3-dev automake autoconf git  libusb-dev libusb-1.0-0-dev libpthread-workqueue-dev pkg-config python python-pip python-dev python-setuptools nmap -y
+        # librtlsdr-dev rtl-sdr
+
+        # Somehow, setuptools fails to install this dependency of the downsampler
+        pip install click-datetime
+
+        echo Downloading librtlsdr
+        (
+                # Installing from source and pinning version to get around bug where tuner was not found
+                cd /tmp
+                git clone git@github.com:librtlsdr/librtlsdr.git
+                cd librtlsdr
+                git checkout v0.5.3
+                mkdir build
+                cd build
+                cmake .. -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_INSTALL_PREFIX=/usr
+                make
+                make install
+        )
 
 	# kalibrate-rtl
 	echo Downloading kalibrate-rtl
-	git clone https://github.com/steve-m/kalibrate-rtl
-	cd kalibrate-rtl
+	(
+	        cd /tmp
+                git clone https://github.com/steve-m/kalibrate-rtl
+                cd kalibrate-rtl
 
-	echo Installing...
-	sudo ./bootstrap && CXXFLAGS='-W -Wall -O3'
-	sudo ./configure
-	make
-	sudo make install
-
+	        echo Installing...
+	        sudo ./bootstrap && CXXFLAGS='-W -Wall -O3'
+	        sudo ./configure
+	        make
+	        sudo make install
+        )
+		
 	# rtl-ais
 	echo Downloading rtl-ais
-	cd ..
-	git clone https://github.com/dgiardini/rtl-ais
-	cd rtl-ais
+	(
+	        cd  /tmp
+	        git clone https://github.com/dgiardini/rtl-ais
+	        cd rtl-ais
 
-	echo Installing...
-	make
-	cp rtl_ais /usr/bin
+	        echo Installing...
+	        make
+	        cp rtl_ais /usr/bin
+        )
+	
+        # downsampler
+        (
+                cd /tmp
+                git clone https://github.com/innovationgarage/ElCheapoAIS-downsampler.git
+                cd ElCheapoAIS-downsampler
 
+                echo Installing...
+                python setup.py install
+        )
+	
 	if [ "$INTERACTIVE" = True ]; then
 		whiptail --msgbox "Your system is ready.\nConfigure your station from the main menu" 20 60 2
 	fi
@@ -92,102 +127,112 @@ do_calibrate() {
 		return 1
 	fi
 
-	kal -g 42 -e 22 -s $freq 2>&1 | tee stations.txt
-	chan="$(cat stations.txt | sed -n 's/.*chan: \(.*\) (.*power: \(.*\)/\2 \1/p' | sort | tail -n 1 | {
-		read a b
-		echo $b
-	})"
-	echo "Using channel $chan"
-	kal -e 41 -c $chan -v | tee calibration.txt
-	cat calibration.txt | sed -n "s/average absolute error: \(.*\) ppm/\1/p" >ppm_error.txt
-	return 0
+        ./elcheapo-calibrate.sh
 }
 
 do_reset() {
-	git clone https://github.com/codazoda/hub-ctrl.c
-	cd hub-ctrl.c
-	gcc -o hub-ctrl hub-ctrl.c -lusb
-	cp hub-ctrl ..
-	cd ..
-	echo "Disconnecting devices (you might lose connection for few seconds if this is remote)"
-	sudo ./hub-ctrl -h 0 -P 2 -p 0
-	sleep 5
-	sudo ./hub-ctrl -h 0 -P 2 -p 1
-	echo done
-	sleep 1
-	return 0
+        (
+	        cd /tmp
+    	        git clone https://github.com/codazoda/hub-ctrl.c
+	        cd hub-ctrl.c
+	        gcc -o hub-ctrl hub-ctrl.c -lusb
+	        cp hub-ctrl /usr/bin/hub-ctrl
+
+      	        echo "Disconnecting devices (you might lose connection for few seconds if this is remote)"
+	        sudo hub-ctrl -h 0 -P 2 -p 0
+	        sleep 5
+	        sudo hub-ctrl -h 0 -P 2 -p 1
+	        echo done
+	        sleep 1
+	        return 0
+	)
 }
 
 do_install() {
 	# TODO: Clean variables
-	server="127.0.0.1"
-	server=$(whiptail --inputbox "UDP server address" 20 60 "$server" 3>&1 1>&2 2>&3)
+	server="elcheapoais.innovationgarage.tech"
+	port="1024"
+	stationid="unknown"
+        msgspersec="100"
+        msgspersecpermmsi="10"
+
+	server=$(whiptail --inputbox "TCP server address to send messages to" 20 60 "$server" 3>&1 1>&2 2>&3)
 	if [ $? -eq 1 ]; then
 		return 1
 	fi
 
-	port="2222"
-	port=$(whiptail --inputbox "UDP server port" 20 60 "$port" 3>&1 1>&2 2>&3)
+	port=$(whiptail --inputbox "TCP server port" 20 60 "$port" 3>&1 1>&2 2>&3)
 	if [ $? -eq 1 ]; then
 		return 1
 	fi
 
-	ppm="$([ -r ppm_error.txt ] && cat ppm_error.txt || echo 0)"
+	stationid=$(whiptail --inputbox "StationID to set in AIS messages" 20 60 "$stationid" 3>&1 1>&2 2>&3)
+	if [ $? -eq 1 ]; then
+		return 1
+	fi
+
+	msgspersec=$(whiptail --inputbox "AIS messages / second upper limit" 20 60 "$msgspersec" 3>&1 1>&2 2>&3)
+	if [ $? -eq 1 ]; then
+		return 1
+	fi
+
+	msgspersecpermmsi=$(whiptail --inputbox "AIS messages / second / mmsi upper limit" 20 60 "$msgspersecpermmsi" 3>&1 1>&2 2>&3)
+	if [ $? -eq 1 ]; then
+		return 1
+	fi
 
 	# TODO: Validate IP and port
-	cat <<EOF >/tmp/cheapoais
-while :
-do
-sudo rtl_ais -n -h $server -P $port -p $ppm -g 60 -S 60  &> "/var/log/cheapoais/ais.\$(date +%Y-%m-%d_%H-%M).log"
-sleep 1
-done
+
+	cat > /tmp/elcheapoais-config <<EOF
+server="$server"
+port="$port"
+stationid="$stationid"
+msgspersec="$msgspersec"
+msgspersecpermmsi="$msgspersecpermmsi"
 EOF
+	
+        sudo mkdir -p /etc/elcheapoais
+	sudo mkdir -p /var/log/elcheapoais
 
-	sudo mkdir -p /var/log/cheapoais
-	sudo mv /tmp/cheapoais /usr/local/bin/
-	chmod a+x /usr/local/bin/cheapoais
+	sudo mv /tmp/elcheapoais-config /etc/elcheapoais/config
+	sudo cp elcheapo-calibrate.sh /usr/local/bin/elcheapo-calibrate.sh
+	sudo cp elcheapoais-receiver.sh /usr/local/bin/elcheapoais-receiver.sh
+	sudo cp elcheapoais-udptotcp.sh /usr/local/bin/elcheapoais-udptotcp.sh
+	sudo cp elcheapoais-downsampler.sh /usr/local/bin/elcheapoais-downsampler.sh
+	chmod a+x /usr/local/bin/elcheapo-calibrate.sh /usr/local/bin/elcheapoais-receiver.sh /usr/local/bin/elcheapoais-udptotcp.sh /usr/local/bin/elcheapoais-downsampler.sh
 
-	# Configure systemd
-
-	cat <<EOF >/tmp/cheapoais.service
-[Unit]
-Description=CheapoAIS Service
-After=multi-user.target
-
-[Service]
-Type=idle
-ExecStart=/bin/bash /usr/local/bin/cheapoais
-KillMode=process
-Type=forking
-
-[Install]
-WantedBy=multi-user.target
-EOF
-	sudo mv /tmp/cheapoais.service /lib/systemd/system/
-	sudo chmod 644 /lib/systemd/system/cheapoais.service
+	sudo cp elcheapoais-receiver.service /lib/systemd/system/elcheapoais-receiver.service
+	sudo cp elcheapoais-udptotcp.service /lib/systemd/system/elcheapoais-udptotcp.service
+	sudo cp elcheapoais-downsampler.service /lib/systemd/system/elcheapoais-downsampler.service
+	sudo chmod 644 /lib/systemd/system/elcheapoais-receiver.service /lib/systemd/system/elcheapoais-udptotcp.service /lib/systemd/system/elcheapoais-downsampler.service
 
 	sudo systemctl daemon-reload
-	sudo systemctl enable cheapoais.service
+	sudo systemctl enable elcheapoais-receiver.service
+	sudo systemctl enable elcheapoais-udptotcp.service
+	sudo systemctl enable elcheapoais-downsampler.service
 
 	ASK_TO_REBOOT=1
 	whiptail --msgbox "\
 Setup done. To start service reboot or execute:
-sudo systemctl start cheapoais.service
+sudo systemctl start elcheapoais-receiver.service
+sudo systemctl start elcheapoais-udptotcp.service
+sudo systemctl start elcheapoais-downsampler.service
 
 Check logs here:
-/var/log/cheapoais/
+/var/log/elcheapoais/
 " 20 70 1
 
 	return 0
 }
 
 do_test_run() {
-	ppm="$([ -r ppm_error.txt ] && cat ppm_error.txt || echo 0)"
-	whiptail --yesno "The program is going to execute rtl_ais now so you can check if you are able to receive NMEA sentences to the console.\n\nThe average absolute error $ppm ppm.\n(If that value is incorrect, cancel and run the calibration again)" 20 60 2 \
+        source <(./elcheapo-calibrate.sh)
+    
+	whiptail --yesno "The program is going to execute rtl_ais now so you can check if you are able to receive NMEA sentences to the console.\n\nThe average absolute error $PPM ppm.\n(If that value is incorrect, cancel and run the calibration again)" 20 60 2 \
 		--yes-button Cancel --no-button Run
 	RET=$?
 	if [ $RET -eq 1 ]; then
-		sudo rtl_ais -n -p $ppm -g 60 -S 60
+		sudo rtl_ais -n -p $PPM -g 60 -S 60
 	fi
 	return 0
 }
@@ -253,7 +298,9 @@ while true; do
 			do_finish
 		elif [ $RET -eq 0 ]; then
 			case "$FUN" in
-			0\ *) do_system_prepare ;;
+			0\ *)
+                          do_system_prepare 2>&1 | tee installlog
+                          ;;
 			A\ *) do_about ;;
 			*) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
 			esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
